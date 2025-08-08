@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",                 // Genera JS moderno
+    "module": "CommonJS",               // Sistema de módulos de Node
+    "rootDir": "src",                   // Código fuente
+    "outDir": "dist",                   // JS compilado
+    "strict": true,                     // Activa todos los checks de tipo
+    "esModuleInterop": true,            // Facilita importar módulos CommonJS
+    "skipLibCheck": true,               // Acelera la compilación
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}
