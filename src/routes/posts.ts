@@ -35,6 +35,11 @@ export default async function postRoutes(fastify: FastifyInstance) {
       data: { title, content, authorId }
     });
 
+    fastify.wsHub.broadcast({
+        type: 'post_created',
+        post
+    });
+
     return reply.code(201).send(post);
   });
 
@@ -125,6 +130,11 @@ export default async function postRoutes(fastify: FastifyInstance) {
       data: req.body as any
     });
 
+    fastify.wsHub.broadcast({
+        type: 'post_updated',
+        post: updated
+    });
+
     return updated;
   });
 
@@ -146,6 +156,12 @@ export default async function postRoutes(fastify: FastifyInstance) {
     }
 
     await fastify.prisma.post.delete({ where: { id } });
+
+    fastify.wsHub.broadcast({
+        type: 'post_deleted',
+        postId: id
+    });
+
     return reply.code(204).send();
   });
 }
