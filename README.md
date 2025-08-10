@@ -60,7 +60,6 @@ Disponible en:
 ```
 http://localhost:3000/docs
 ```
-
 El botón "Authorize" permite introducir el **Bearer Token** para acceder a rutas protegidas desde Swagger.
 
 ---
@@ -183,3 +182,15 @@ Salida esperada:
 - Base de datos de desarrollo y test separadas.
 - Migraciones automáticas antes de correr los tests.
 - Swagger para probar la API de forma interactiva.
+
+---
+
+## Mejoras y posibles ampliaciones
+
+- Implementar **arquitectura de microservicios** para separar responsabilidades (por ejemplo: servicio de autenticación, servicio de usuarios, servicio de posts).
+- Añadir **servicio de WebSockets** independiente para comunicación en tiempo real.
+- Configurar **CI/CD** para despliegues automáticos y tests en cada commit.
+- Añadir más cobertura de **tests unitarios y de integración**.
+- Implementar **monitorización y logging centralizado**.
+- Añadir soporte para **Docker** y **docker-compose** para levantar el entorno completo (app + base de datos) fácilmente.
+- Mejorar la **validación de datos** y gestión de errores.
