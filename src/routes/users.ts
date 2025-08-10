@@ -7,35 +7,49 @@ import crypto from 'crypto';
 
 export default async function userRoutes(fastify: FastifyInstance) {
 
-  fastify.post('/users', {
-    schema: {
-      ...createUserSchema,
-      tags: ['Users'],
-      summary: 'Crear un nuevo usuario',
-      response: {
-        201: {
-          type: 'object',
-          properties: {
-            id: { type: 'integer' },
-            name: { type: 'string' },
-            email: { type: 'string' },
-            role: { type: 'string' },
-            createdAt: { type: 'string', format: 'date-time' },
-            updatedAt: { type: 'string', format: 'date-time' }
+    fastify.post('/users', {
+        schema: {
+          ...createUserSchema,
+          tags: ['Users'],
+          summary: 'Crear un nuevo usuario',
+          response: {
+            201: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer' },
+                name: { type: 'string' },
+                email: { type: 'string' },
+                role: { type: 'string' },
+                createdAt: { type: 'string', format: 'date-time' },
+                updatedAt: { type: 'string', format: 'date-time' }
+              }
+            }
           }
         }
-      }
-    }
-  }, async (req, reply) => {
-    const { name, email, password } = req.body as any;
-    const exists = await fastify.prisma.user.findUnique({ where: { email } });
-    if (exists) return reply.code(409).send({ message: 'Email already in use' });
-
-    const hashed = await bcrypt.hash(password, 10);
-    const user = await fastify.prisma.user.create({ data: { name, email, password: hashed } });
-    const { password: _omit, ...safe } = user as any;
-    return reply.code(201).send(safe);
-  });
+    }, async (req, reply) => {
+        const { name, email, password, role } = req.body as any;
+      
+        const exists = await fastify.prisma.user.findUnique({ where: { email } });
+        if (exists) return reply.code(409).send({ message: 'Email already in use' });
+      
+        let requester: any = null;
+        const auth = req.headers.authorization;
+        if (auth?.startsWith('Bearer ')) {
+          const token = auth.slice('Bearer '.length);
+          try {
+            requester = await fastify.jwt.verify(token);
+          } catch {  }
+        }
+      
+        const hashed = await bcrypt.hash(password, 10);
+        const finalRole = requester?.role === 'ADMIN' && role ? role : 'USER';
+      
+        const user = await fastify.prisma.user.create({
+          data: { name, email, password: hashed, role: finalRole }
+        });
+        const { password: _omit, ...safe } = user as any;
+        return reply.code(201).send(safe);
+    });
 
   fastify.get('/users', {
     preHandler: [fastify.authenticate],
@@ -103,12 +117,21 @@ export default async function userRoutes(fastify: FastifyInstance) {
   }, async (req, reply) => {
     const id = Number((req.params as any).id);
     const requester = (req as any).user;
+  
     if (requester.role !== 'ADMIN' && requester.id !== id) {
       return reply.code(403).send({ message: 'Forbidden' });
     }
+  
     const data = { ...(req.body as any) };
-    if (data.password) data.password = await bcrypt.hash(data.password, 10);
-
+  
+    if (data.role && requester.role !== 'ADMIN') {
+      delete data.role;
+    }
+  
+    if (data.password) {
+      data.password = await bcrypt.hash(data.password, 10);
+    }
+  
     try {
       const updated = await fastify.prisma.user.update({
         where: { id },
