@@ -27,17 +27,23 @@ export default async function postRoutes(fastify: FastifyInstance) {
     const { title, content, authorId } = req.body as any;
 
     const requester = (req as any).user;
-    if (requester.role !== 'ADMIN' && requester.id !== authorId) {
+    const authorNum = Number(authorId);
+    if (requester.role !== 'ADMIN' && requester.id !== authorNum) {
       return reply.code(403).send({ message: 'Forbidden' });
     }
 
     const post = await fastify.prisma.post.create({
-      data: { title, content, authorId }
+      data: { title, content, authorId: authorNum }
+    });
+
+    console.log('WS DEBUG broadcast:', {
+        type: 'post_created',
+        data: post
     });
 
     fastify.wsHub.broadcast({
-        type: 'post_created',
-        post
+      type: 'post_created',
+      data: { id: post.id, title: post.title, content: post.content, authorId: post.authorId, createdAt: post.createdAt }
     });
 
     return reply.code(201).send(post);
@@ -130,9 +136,10 @@ export default async function postRoutes(fastify: FastifyInstance) {
       data: req.body as any
     });
 
+    console.log('WS DEBUG broadcast:', { type: 'post_updated', data: updated });
     fastify.wsHub.broadcast({
-        type: 'post_updated',
-        post: updated
+    type: 'post_updated',
+    data: { id: updated.id, title: updated.title, content: updated.content, authorId: updated.authorId, updatedAt: updated.updatedAt }
     });
 
     return updated;
@@ -157,9 +164,10 @@ export default async function postRoutes(fastify: FastifyInstance) {
 
     await fastify.prisma.post.delete({ where: { id } });
 
+    console.log('WS DEBUG broadcast:', { type: 'post_deleted', data: { id } });
     fastify.wsHub.broadcast({
-        type: 'post_deleted',
-        postId: id
+    type: 'post_deleted',
+    data: { id }
     });
 
     return reply.code(204).send();
