@@ -11,6 +11,7 @@ import postRoutes from './routes/posts';
 import authPlugin from './plugins/auth';
 import authRoutes from './routes/auth';
 import wsPlugin from './plugins/ws';
+import cors from '@fastify/cors';
 
 export async function buildApp() {
   const server = Fastify({ logger: true });
@@ -24,7 +25,7 @@ export async function buildApp() {
       },
       servers: [
         { url: 'http://localhost:3000', description: 'Local' },
-        { url: 'http://nodetest.infordrona.com:3000', description: 'Prod' },
+        { url: 'https://nodetest.infordrona.com/api', description: 'Prod' },
       ],
       components: {
         securitySchemes: {
@@ -37,6 +38,12 @@ export async function buildApp() {
       }
     },
   });
+
+  await server.register(cors, {
+    origin: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
 
   await server.register(fastifySwaggerUi, {
     routePrefix: '/docs',
